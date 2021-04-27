@@ -2,77 +2,94 @@
 Routes and views for the flask application.
 """
 
+import uuid
 from datetime import datetime
-from flask import render_template, flash, redirect, request, session, url_for
+
+import msal
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
+
 from config import Config
+from dto.person import Person
 from probability import app, db
 from probability.forms import LoginForm, ProbabilityForm
-from flask_login import current_user, login_user, logout_user, login_required
 from probability.models import User
-from service import compute_probability
-from dto import Person
-import msal
-import uuid
+from service.probability import compute_probability
 
 
-@app.route('/')
-@app.route('/home')
+@app.route("/", methods=["GET", "POST"])
+@app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():
-    """Renders home template.
-
-    Returns:
-        obj: template
-    """
     user = User.query.filter_by(username=current_user.username).first_or_404()
-    return render_template('index.html', title='Home Page')
+    probability = None
 
+    form = ProbabilityForm()
 
-@app.route('/probability', methods=['GET', 'POST'])
-@login_required
-def probability():
-    """[summary]
-
-    Returns:
-        [type]: [description]
-    """
-    form = ProbabilityForm(request.form)
     if form.validate_on_submit():
-        person1 = Person(form.first_name1, form.last_name1, form.birth_date1, form.bsn1)
-        person2 = Person(form.first_name2, form.last_name2, form.birth_date2, form.bsn2)
-        
-        form.probability = compute_probability(person1, person2)
-        return redirect(url_for('home'))
-    return render_template('index.html',
-                           title='Compute Probability',
-                           form=form)
+        person1 = Person(
+            form.first_name1.data,
+            form.last_name1.data,
+            form.birth_date1.data,
+            form.bsn1.data,
+        )
+
+        person2 = Person(
+            form.first_name2.data,
+            form.last_name2.data,
+            form.birth_date2.data,
+            form.bsn2.data,
+        )
+
+        try:
+            probability = compute_probability(person1, person2)
+        except ValueError as e:  # Skip `ValueError: invalid literal for int() with base 10: '[hub_id]'`
+            abort(403, str(e))
+
+    return render_template(
+        "index.html", title="FRISS", form=form, probability=probability
+    )
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/probability", methods=["POST"])
+def probability():
+    payload = request.json
+    persons = payload.get("persons")
+
+    if not persons:
+        message = jsonify(message='"persons" data payload is missing.')
+        return make_response(message, 400)
+
+    person1 = Person.from_json(persons[0])
+    person2 = Person.from_json(persons[1])
+
+    probability = compute_probability(person1, person2)
+
+    return jsonify({"probability": probability})
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
+            flash("Invalid username or password")
+            return redirect(url_for("login"))
         login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('home')
+        next_page = request.args.get("next")
+        if not next_page or url_parse(next_page).netloc != "":
+            next_page = url_for("home")
         return redirect(next_page)
     session["state"] = str(uuid.uuid4())
     auth_url = _build_auth_url(scopes=Config.SCOPE, state=session["state"])
-    return render_template('login.html',
-                           title='Sign In',
-                           form=form,
-                           auth_url=auth_url)
+    return render_template("login.html", title="Sign In", form=form, auth_url=auth_url)
 
 
-@app.route(Config.REDIRECT_PATH)  
+@app.route(Config.REDIRECT_PATH)
 def authorized():
     """Its absolute URL must match your app's redirect_uri set in AAD.
 
@@ -80,20 +97,18 @@ def authorized():
         object: response object (a WSGI application) that, if called,
     redirects the client to the target location
     """
-    if request.args.get('state') != session.get("state"):
+    if request.args.get("state") != session.get("state"):
         return redirect(url_for("home"))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
         return render_template("auth_error.html", result=request.args)
-    if request.args.get('code'):
+    if request.args.get("code"):
         cache = _load_cache()
         # Acquire a token from a built msal app, along with the appropriate redirect URI
-        result = _build_msal_app(
-            cache=cache).acquire_token_by_authorization_code(
-                request.args["code"],
-                scopes=Config.SCOPE,
-                redirect_uri=url_for("authorized",
-                                     _external=True,
-                                     _scheme="https"))
+        result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
+            request.args["code"],
+            scopes=Config.SCOPE,
+            redirect_uri=url_for("authorized", _external=True, _scheme="https"),
+        )
         if "error" in result:
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
@@ -102,10 +117,10 @@ def authorized():
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
-    return redirect(url_for('home'))
+    return redirect(url_for("home"))
 
 
-@app.route('/logout')
+@app.route("/logout")
 def logout():
     """logs out from web application.
 
@@ -117,11 +132,14 @@ def logout():
         # Wipe out user and its token cache from session
         session.clear()
         # Also logout from your tenant's web session
-        return redirect(Config.AUTHORITY + "/oauth2/v2.0/logout" +
-                        "?post_logout_redirect_uri=" +
-                        url_for("login", _external=True))
+        return redirect(
+            Config.AUTHORITY
+            + "/oauth2/v2.0/logout"
+            + "?post_logout_redirect_uri="
+            + url_for("login", _external=True)
+        )
 
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
 
 def _load_cache():
@@ -131,8 +149,8 @@ def _load_cache():
         TokenCache: token cache.
     """
     cache = msal.SerializableTokenCache()
-    if session.get('token_cache'):
-        cache.deserialize(session['token_cache'])
+    if session.get("token_cache"):
+        cache.deserialize(session["token_cache"])
     return cache
 
 
@@ -143,10 +161,10 @@ def _save_cache(cache):
         cache (TokenCache): token cache
     """
     if cache.has_state_changed:
-        session['token_cache'] = cache.serialize()
+        session["token_cache"] = cache.serialize()
 
 
-def _build_msal_app(cache=None, authority=None):  
+def _build_msal_app(cache=None, authority=None):
     """Returns a ConfidentialClientApplication.
 
     Args:
@@ -160,7 +178,8 @@ def _build_msal_app(cache=None, authority=None):
         Config.CLIENT_ID,
         authority=authority or Config.AUTHORITY,
         client_credential=Config.CLIENT_SECRET,
-        token_cache=cache)
+        token_cache=cache,
+    )
 
 
 def _build_auth_url(authority=None, scopes=None, state=None):
@@ -177,4 +196,5 @@ def _build_auth_url(authority=None, scopes=None, state=None):
     return _build_msal_app(authority=authority).get_authorization_request_url(
         scopes or [],
         state=state or str(uuid.uuid4()),
-        redirect_uri=url_for("authorized", _external=True, _scheme="https"))
+        redirect_uri=url_for("authorized", _external=True, _scheme="https"),
+    )

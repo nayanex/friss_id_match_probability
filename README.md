@@ -174,3 +174,62 @@ All Python dependencies are stored in the requirements.txt file. To install them
     brew install unixodbc
     ```
 - Check [here](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/install-microsoft-odbc-driver-sql-server-macos?view=sql-server-ver15) to add SQL Server drivers for Mac.
+
+
+## Test the API
+
+### with Curl 
+
+```
+curl -k -X POST -H 'Content-Type: application/json' -d '{"persons":[{"first_name":"Andrew", "last_name":"Craw", "birth_date": "20-02-1985", "bsn":"931212312"}, {"first_name":"A.", "last_name":"Craw", "birth_date": "20-02-1985", "bsn":"931212312"}]}' https://localhost:5555/probability
+```
+
+## Installation
+
+Make a copy of `example.env` file with the name `.env`. Fill missed credentials and settings there.
+
+From the root of the project run
+```
+make install
+```
+It will create a virtual environment and install all the dependencies.
+
+## How to run
+Switch to the virtual environment
+```
+friss-env/bin/activate
+```
+Then run 
+```
+python application.py 
+```
+
+## For developers
+
+To setup a dev environment run
+```
+make dev_install
+```
+Run unittests
+```
+make test
+```
+Check linters
+```
+make lint
+```
+Try to fix linter and sort errors automatically
+```
+make format
+```
+
+Check `Makefile` for other possible commands
+
+## PR Submission Policy
+
+All commits are mandatory to start with the prefix NEW, FIX or OPT :
+
+> NEW - all new features, can brake backward compatibility.
+> FIX - fixing an issue in existing functionality.
+> OPT - optional improvements, refactoring etc. Must be backward compatible.
+

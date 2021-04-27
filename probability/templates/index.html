@@ -68,11 +68,10 @@
         <p>{{ form.submit() }}</p>
         <div class="col-sm-4">
             <p>
-                {{ form.probability.label }}<br>
-                {{ form.probability(size=30) }}
-                {% for error in form.probability.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
+                {% if probability %}
+                Matching Result:<br>
+                {{ probability }}
+                {% endif %}
             </p>
         </div>
     </div>
