@@ -13,43 +13,18 @@ from werkzeug.urls import url_parse
 from config import Config
 from dto.person import Person
 from probability import app, db
-from probability.forms import LoginForm, ProbabilityForm
+from probability.forms import LoginForm
 from probability.models import User
 from service.probability import compute_probability
 
 
-@app.route("/", methods=["GET", "POST"])
-@app.route("/home", methods=["GET", "POST"])
+@app.route("/")
+@app.route("/home")
 @login_required
 def home():
     user = User.query.filter_by(username=current_user.username).first_or_404()
-    probability = None
 
-    form = ProbabilityForm()
-
-    if form.validate_on_submit():
-        person1 = Person(
-            form.first_name1.data,
-            form.last_name1.data,
-            form.birth_date1.data,
-            form.bsn1.data,
-        )
-
-        person2 = Person(
-            form.first_name2.data,
-            form.last_name2.data,
-            form.birth_date2.data,
-            form.bsn2.data,
-        )
-
-        try:
-            probability = compute_probability(person1, person2)
-        except ValueError as e:  # Skip `ValueError: invalid literal for int() with base 10: '[hub_id]'`
-            abort(403, str(e))
-
-    return render_template(
-        "index.html", title="FRISS", form=form, probability=probability
-    )
+    return render_template("index.html", title="FRISS")
 
 
 @app.route("/probability", methods=["POST"])

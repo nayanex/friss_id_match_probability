@@ -10,8 +10,8 @@ class Person:
 
     first_name: str
     last_name: str
-    birth_date: datetime
-    bsn: str
+    birth_date: datetime = None
+    bsn: str = None
 
     def to_json(self):
         json_post = {
@@ -24,12 +24,20 @@ class Person:
 
     @staticmethod
     def from_json(json_post):
-        first_name = json_post.get("first_name")
-        last_name = json_post.get("last_name")
-        birth_date = json_post.get("birth_date")
-        bsn = json_post.get("bsn")
+        first_name = "".join(json_post.get("first_name").split()).lower()
+        last_name = "".join(json_post.get("last_name").split()).lower()
+        birth_date = "".join(json_post.get("birth_date").split())
+        bsn = "".join(json_post.get("bsn").split()).lower()
+
         if first_name is None or first_name == "":
             raise ValidationError("person does not have a first name.")
+        if last_name is None or first_name == "":
+            raise ValidationError("person does not have a last name.")
+        if not birth_date:
+            birth_date = None
+        if not bsn:
+            bsn = None
+
         return Person(
             first_name=first_name, last_name=last_name, birth_date=birth_date, bsn=bsn
         )

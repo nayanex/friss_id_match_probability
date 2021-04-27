@@ -2,78 +2,66 @@
 
 {% block content %}
 <h1>{{ title }}</h1>
-<form action="" method="post" novalidate enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
-    <div class="row">
-        <div class="col-sm-4">
-            <p>
-                {{ form.first_name1.label }}<br>
-                {{ form.first_name1(size=64) }}
-                {% for error in form.first_name1.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.last_name1.label }}<br>
-                {{ form.last_name1(size=64) }}
-                {% for error in form.last_name1.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.birth_date1.label }}<br>
-                {{ form.birth_date1 }}
-                {% for error in form.birth_date1.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.bsn1.label }}<br>
-                {{ form.bsn1 }}
-                {% for error in form.bsn1.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-        </div>
-        <div class="col-sm-4">
-            <p>
-                {{ form.first_name2.label }}<br>
-                {{ form.first_name2(size=64) }}
-                {% for error in form.first_name2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.last_name2.label }}<br>
-                {{ form.last_name2(size=64) }}
-                {% for error in form.last_name2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.birth_date2.label }}<br>
-                {{ form.birth_date2 }}
-                {% for error in form.birth_date2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.bsn2.label }}<br>
-                {{ form.bsn2 }}
-                {% for error in form.bsn2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-        </div>
-        <p>{{ form.submit() }}</p>
-        <div class="col-sm-4">
-            <p>
-                {% if probability %}
-                Matching Result:<br>
-                {{ probability }}
-                {% endif %}
-            </p>
+
+<div class="row">
+    <div class="col-sm-4">
+        <div class="panel-body">
+            <div class="form-inline">
+                <div class="form-group">
+                    <label for="first_name1">First Name</label>
+                    <input type="text" class="form-control" id="first_name1">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name1">Last Name</label>
+                    <input type="text" class="form-control" id="last_name1">
+                </div>
+
+                <div class="form-group">
+                    <label for="birth_date1">Birth Date</label>
+                    <input type="text" class="form-control" id="birth_date1">
+                </div>
+
+                <div class="form-group">
+                    <label for="bsn1">Identification Number</label>
+                    <input type="text" class="form-control" id="bsn1">
+                </div>
+            </div>
         </div>
     </div>
-</form>
+    <div class="col-sm-4">
+        <div class="panel-body">
+            <div class="form-inline">
+                <div class="form-group">
+                    <label for="first_name2">First Name</label>
+                    <input type="text" class="form-control" id="first_name2">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name2">Last Name</label>
+                    <input type="text" class="form-control" id="last_name2">
+                </div>
+
+                <div class="form-group">
+                    <label for="birth_date2">Birth Date</label>
+                    <input type="text" class="form-control" id="birth_date2">
+                </div>
+
+                <div class="form-group">
+                    <label for="bsn2">Identification Number</label>
+                    <input type="text" class="form-control" id="bsn2">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-4">
+        <button class="btn btn-primary" id="probabilityButton">Probability</button>
+        <div class=" panel-heading">
+            <h3 class="panel-title">Probability: <span id="probability"></span>
+            </h3>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

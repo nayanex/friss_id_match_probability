@@ -230,6 +230,8 @@ Check `Makefile` for other possible commands
 All commits are mandatory to start with the prefix NEW, FIX or OPT :
 
 > NEW - all new features, can brake backward compatibility.
+
 > FIX - fixing an issue in existing functionality.
+
 > OPT - optional improvements, refactoring etc. Must be backward compatible.
 
