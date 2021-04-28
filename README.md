@@ -53,7 +53,7 @@ launch the program using
 
 ![SSL Certificate error message](img-doc/ssl-cert-error.png)
 
-If you get this error... Type "this is unsafe" and hit ENTER.
+If you get this error... Type "this is unsafe" (all together - without spaces) and hit ENTER.
 
 ## Fuzzy Name Matching with Machine Learning
 
